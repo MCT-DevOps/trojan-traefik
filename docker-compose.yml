@@ -1,0 +1,29 @@
+version: "3"
+name: trojan_go_wrap
+
+services:
+  trojan:
+    image: p4gefau1t/trojan-go:v0.10.6
+    # 默认：/etc/trojan-go/config.json
+    restart: always
+    volumes:
+      - ./trojan.json:/etc/trojan-go/config.json
+      - /srv/apps/edge-router/config/certs:/certs/:ro
+    networks:
+      - frontend
+      - warp_network
+    labels:
+      - traefik.enable=true
+      - "traefik.tcp.routers.trojan-go.entrypoints=web_secure"
+
+      - "traefik.tcp.services.trojan-go.loadbalancer.server.port=443"
+      - "traefik.tcp.routers.trojan-go.rule=HostSNI(`${DOMAIN}`)"
+      - traefik.tcp.routers.trojan-go.tls=true
+      - traefik.tcp.routers.trojan-go.tls.passthrough=true
+      - traefik.tcp.routers.trojan-go.tls.certresolver=acmeDnsResolver
+
+networks:
+  frontend:
+    external: true
+  warp_network:
+    external: true
